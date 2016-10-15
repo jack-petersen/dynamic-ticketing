@@ -1,11 +1,10 @@
 
-# THink
-# Establish lists of
 
+# https://www.reddit.com/r/nfl/comments/wt1sr/list_of_nfl_teams_by_media_market_size/
 # Our dictionaries:
-eloskill = {'denver': 1637, 'seattle': 1635, 'carolina': 1634, 'kansascity': 1621, 'arizona':1613, 'newengland':1605, 'pittsburgh':1591, 'greenbay':1582, 'cincinnati':1578, 'minnesota':1567, 'nyjets':1522, 'buffalo':1519, 'houston':1506,
-            'detroit':1503, 'washington': 1496, 'philadelphia': 1488, 'atlanta':1486, 'indianapolis': 1484, 'losangeles':1479, 'baltimore':1475, 'nygiants':1469, 'neworleans':1464, 'oakland':1455, 'dallas':1446, 'chicago':1444, 'miami':1439,
-            'sandiego':1438, 'sanfrancisco':1437, 'tampabay':1412, 'cleveland':1395, 'jacksonville':1389, 'tennessee':1349}
+mediaMarketDict = {'denver': 4727, 'seattle': 4565, 'carolina': 8152, 'kansascity': 2903, 'arizona':4438, 'newengland':9684, 'pittsburgh':4396, 'greenbay':4186, 'cincinnati':4666, 'minnesota':5073, 'nyjets':22421, 'buffalo':2990, 'houston':6452,
+            'detroit':8032, 'washington': 5853, 'philadelphia': 8688, 'atlanta':6462, 'indianapolis': 3266, 'losangeles':3986, 'baltimore':4248, 'nygiants':22421, 'neworleans':2635, 'oakland':10645, 'dallas':8071, 'chicago':10606, 'miami':1439,
+            'sandiego':2683, 'sanfrancisco':10645, 'tampabay':4417, 'cleveland':4794, 'jacksonville':3660, 'tennessee':2667}
 
 stardict = {'denver': {'vonmiller':85, 'aqibtalib':66, 'demarcusware':64}, 'seattle': {'russellwilson':83, 'richardsherman':80, 'kamchancellor':68}, 'carolina': {'camnewton':100,'lukekuechly':93, 'gregolsen':62}, 'kansascity': {'justinhouston':74},
             'arizona':{'carsonpalmer':88, 'patrickpeterson':82, 'larryfitzgerald':73, 'tyrannmathieu':72},
@@ -24,19 +23,23 @@ divisiondict = {'seattle': ['arizona', 'losangeles', 'sanfrancisco'], 'arizona':
                 'pittsburgh': ['cincinnati', 'cleveland', 'baltimore'], 'cincinnati': ['pittsburgh', 'cleveland', 'baltimore'], 'cleveland': ['cincinnati', 'pittsburgh', 'baltimore'], 'baltimore': ['cincinnati', 'cleveland', 'pittsburgh'],
                 'indianapolis': ['houston', 'tennessee', 'jacksonville'], 'houston': ['indianapolis', 'tennessee', 'jacksonville'], 'tennessee': ['houston', 'indianapolis', 'jacksonville'], 'jacksonville': ['houston', 'tennessee', 'indianapolis'],
                 'miami': ['newengland', 'buffalo', 'nyjets'], 'newengland': ['miami', 'buffalo', 'nyjets'], 'buffalo': ['newengland', 'miami', 'nyjets'], 'nyjets': ['newengland', 'buffalo', 'miami']}
-print divisiondict['baltimore']
+
+eloDict = {'denver': 1637, 'seattle': 1635, 'carolina': 1634, 'kansascity': 1621, 'arizona':1613, 'newengland':1605, 'pittsburgh':1591, 'greenbay':1582, 'cincinnati':1578, 'minnesota':1567, 'nyjets':1522, 'buffalo':1519, 'houston':1506,
+            'detroit':1503, 'washington': 1496, 'philadelphia': 1488, 'atlanta':1486, 'indianapolis': 1484, 'losangeles':1479, 'baltimore':1475, 'nygiants':1469, 'neworleans':1464, 'oakland':1455, 'dallas':1446, 'chicago':1444, 'miami':1439,
+            'sandiego':1438, 'sanfrancisco':1437, 'tampabay':1412, 'cleveland':1395, 'jacksonville':1389, 'tennessee':1349}
+
+varWeightDict = {'elo': 0.35, 'market': 0.1, 'division': .15, 'stars':.4 }
 
 
 
-
-def calcEloSkill(eloskill, ht, vt):
+def calcEloSkill(eloDict, ht, vt):
     # Input: dictionary with elo ratings, hometeam, visiting team
     # Output: a number that serves as the modifier
     elosum = 0
-    for i in eloskill:
-        elosum += eloskill[i]
+    for i in eloDict:
+        elosum += eloDict[i]
     eloaverage = elosum / 32.0
-    vtelodiff = eloskill[vt] / eloaverage
+    vtelodiff = eloDict[vt] / eloaverage
 
     return vtelodiff
 
@@ -65,10 +68,19 @@ def calcStarPower(stardict, ht, vt):
 
 
 
-def calcBigMarket():
+def calcMarketSize(mediaMarketDict, ht, vt):
     # Input: A dictionary with net worth of teams, a dictionary with "Market sizes" of each team
     # Output: A number serving as a modifier
-    pass
+    mediaMarketSum = 0
+    for i in mediaMarketDict:
+        mediaMarketSum += mediaMarketDict[i]
+
+
+    mediaMarketAvg = mediaMarketSum / 32.0
+    mediaMarketdiff = mediaMarketDict[vt] / mediaMarketAvg
+
+    return mediaMarketdiff
+
 
 def sameDivision(divisiondict, ht, vt):
     # Input: A double dictionary with each team mapped to the other teams in its division
@@ -82,4 +94,17 @@ def sameDivision(divisiondict, ht, vt):
     else:
         return 1.1
 
-print sameDivision
+
+def calcModifier(eloDict, mediaMarketDict, divisiondict, stardict, ht, vt, varweight):
+    # Input: results from functions above, also a dictionary with how each of the functions should be weighted.
+    # Output: a final modifier
+
+    elo = calcEloSkill(eloDict, ht, vt)
+    market = calcMarketSize(mediaMarketDict, ht, vt)
+    division = sameDivision(divisiondict, ht, vt)
+    stars = calcStarPower(stardict, ht, vt)
+
+    finalweight = (varweight['elo'] * elo) + (varweight['market'] * market) + (varweight['division'] * division) + (varweight['stars'] * stars)
+    return finalweight
+
+print "mod =", calcModifier(eloDict, mediaMarketDict, divisiondict, stardict, 'jacksonville', 'indianapolis', varWeightDict)
